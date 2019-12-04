@@ -1,0 +1,2 @@
+slackclient
+nre-darwin-py
