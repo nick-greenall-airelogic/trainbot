@@ -13,3 +13,4 @@ def run():
     slack_token = os.environ["SLACK_API_TOKEN"]
     rtm_client = RTMClient(token=slack_token)
     rtm_client.start()
+
