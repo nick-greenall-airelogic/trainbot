@@ -42,11 +42,11 @@ def send_message_text(channel, text):
     )
 
 def parse_message(channel_id, message):
-    mtch = re.match('^\s+schedule to (\S+)( from )?(\S+)? at (\d\d:\d\d)$', message)
+    mtch = re.match('^\s+schedule to (\S+)( from )?(\S+)? at (\d\d:\d\d)( on )?([A-Z]{3}-[A-Z]{3})?$', message)
 
     if mtch is not None:
-        print(mtch.groups())
         origin_code = mtch.group(3) if mtch.group(3) else 'LDS'
+        days = 'MON-FRI' if not mtch.group(6) else mtch.group(6)
 
         try:
             if origin_code not in STATION_CODES.values():
@@ -55,7 +55,7 @@ def parse_message(channel_id, message):
                 dest_code = STATION_CODES[mtch.group(1)]
             else:
                 dest_code = mtch.group(1)
-            sched.set_user_reminder(channel_id, mtch.group(4), lambda :send_message(channel_id, dest_code, origin_code))
+            sched.set_user_reminder(channel_id, mtch.group(4), lambda :send_message(channel_id, dest_code, origin_code), days=days)
             send_message_text(channel_id, 'reminder set at {}'.format(mtch.group(4)))
             return
         except KeyError as e:
