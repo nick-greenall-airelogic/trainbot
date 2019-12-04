@@ -1,8 +1,12 @@
 import os
 from slack import RTMClient, WebClient
+import re
+
+from . import STATION_CODES
 
 SLACK_TOKEN = os.environ['SLACK_API_TOKEN']
 _BOT_ID = None
+
 
 @RTMClient.run_on(event="message")
 def call_bot(**payload):
@@ -16,8 +20,39 @@ def call_bot(**payload):
         user = data['user']
         # MAKE METHOD CALL RETRIEVE DATA AND PUT IT IN TEXT
         # for the method call
-        print(data['blocks'][0]['elements'][0]['elements'][1]['text'])
+        # print(data['blocks'][0]['elements'][0]['elements'][1]['text'])
+        dummy_method(data['blocks'][0]['elements'][0]['elements'][1]['text'])
         web_client.chat_postMessage(
             channel=channel_id,
             text=f"<!here> train train!! <@{user}>!\n"
         )
+
+
+def dummy_method(message):
+    mtch = re.match('^\s+schedule to (.+) at (.+)$', message)
+
+    if mtch is not None:
+        if mtch.group(1) in STATION_CODES.values():
+            print("Scheduled")
+            #CALL METHOD
+        else:
+            try:
+                #CALL METHOD
+                print(STATION_CODES[mtch.group(1)])
+                #CALL METHOD
+            except KeyError as e:
+                print("ERROR")
+
+    mtch =re.match('^\s+trains to (.+)$', message)
+
+    if mtch is not None:
+        if mtch.group(1) in STATION_CODES.values():
+            print("not scheduled")
+            #CALL METHOD
+        else:
+            try:
+                print(STATION_CODES[mtch.group(1)])
+            except KeyError as e:
+                print("ERROR")
+
+    #INVALID MESSAGE
