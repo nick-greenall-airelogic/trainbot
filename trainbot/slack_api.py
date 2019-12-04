@@ -20,9 +20,9 @@ def call_bot(**payload):
         parse_message(channel_id, data['blocks'][0]['elements'][0]['elements'][1]['text'])
 
 
-def send_message(channel, short_code):
+def send_message(channel, short_code, origin_code):
     web_client = WebClient(token=SLACK_TOKEN)
-    board = train_api.board_for_shortcode(short_code)
+    board = train_api.board_for_shortcode(short_code, origin_code)
     if board:
         text = '\n'.join(
             (f'{row[0]} : {row[1]} : {row[2]} : {row[3]}' for row in board)
@@ -42,32 +42,42 @@ def send_message_text(channel, text):
     )
 
 def parse_message(channel_id, message):
-    mtch = re.match('^\s+schedule to (.+) at (\d\d:\d\d)$', message)
+    mtch = re.match('^\s+schedule to (\S+)( from )?(\S+)? at (\d\d:\d\d)$', message)
 
     if mtch is not None:
-        if mtch.group(1) in STATION_CODES.values():
-            sched.set_user_reminder(channel_id, mtch.group(2), lambda :send_message(channel_id, mtch.group(1)))
-            send_message_text(channel_id, 'reminder set at {}'.format(mtch.group(2)))
-            return
-        else:
-            try:
-                sched.set_user_reminder(channel_id, mtch.group(2), lambda :send_message(channel_id, STATION_CODES[mtch.group(1)]))
-                send_message_text(channel_id, 'reminder set at {}'.format(mtch.group(2)))
-                return
-            except KeyError as e:
-                print("ERROR")
+        print(mtch.groups())
+        origin_code = mtch.group(3) if mtch.group(3) else 'LDS'
 
-    mtch =re.match('^\s+trains to (.+)$', message)
+        try:
+            if origin_code not in STATION_CODES.values():
+                origin_code = STATION_CODES[origin_code]
+            if mtch.group(1) not in STATION_CODES.values():
+                dest_code = STATION_CODES[mtch.group(1)]
+            else:
+                dest_code = mtch.group(1)
+            sched.set_user_reminder(channel_id, mtch.group(4), lambda :send_message(channel_id, dest_code, origin_code))
+            send_message_text(channel_id, 'reminder set at {}'.format(mtch.group(4)))
+            return
+        except KeyError as e:
+            send_message_text(channel_id, "Hmmm... Maybe you haven't spelt your station full name correctly")
+            return
+
+    mtch =re.match('^\s+trains to (\S+)( from )?(\S+)?$', message)
 
     if mtch is not None:
-        if mtch.group(1) in STATION_CODES.values():
-            send_message(channel_id, mtch.group(1))
-            return
-        else:
-            try:
-                send_message(channel_id, STATION_CODES[mtch.group(1)])
-                return
-            except KeyError as e:
-                print("ERROR")
+        origin_code = mtch.group(3) if mtch.group(3) else 'LDS'
 
+        try:
+            if origin_code not in STATION_CODES.values():
+                origin_code = STATION_CODES[origin_code]
+            if mtch.group(1) not in STATION_CODES.values():
+                dest_code = STATION_CODES[mtch.group(1)]
+            else:
+                dest_code = mtch.group(1)
+            send_message(channel_id, dest_code, origin_code)
+            return
+        except KeyError as e:
+            send_message_text(channel_id, "Hmmm... Maybe you haven't spelt your station full name correctly")
+            return
+    send_message_text(channel_id, "I don't know what you mean")
     #INVALID MESSAGE
