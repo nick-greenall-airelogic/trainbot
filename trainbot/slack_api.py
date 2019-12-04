@@ -2,6 +2,7 @@ import os
 from slack import RTMClient, WebClient
 import re
 
+from trainbot import train_api
 from . import STATION_CODES
 
 SLACK_TOKEN = os.environ['SLACK_API_TOKEN']
@@ -11,29 +12,33 @@ _BOT_ID = None
 @RTMClient.run_on(event="message")
 def call_bot(**payload):
     data = payload['data']
-    # print(payload)
-    # print(data)
-    web_client = payload['web_client']
     bot_id = 'UR8R3SBT6'
     if 'text' in data and f"<@{bot_id}>" in data['text']:
         channel_id = data['channel']
-        user = data['user']
 
-        response = dummy_method(data['blocks'][0]['elements'][0]['elements'][1]['text'])
+        send_message(channel_id, data['blocks'][0]['elements'][0]['elements'][1]['text'])
 
-        web_client.chat_postMessage(
-            channel=channel_id,
-            text=f"<!here> {response} for <@{user}>!\n"
+
+def send_message(channel, short_code):
+    web_client = WebClient(token=SLACK_TOKEN)
+    board = parse_message(short_code)
+    if board:
+        text = '\n'.join(
+            (f'{row[0]} : {row[1]} : {row[2]} : {row[3]}' for row in board)
         )
-
+    else:
+        text = "Invalid Command or no trains for selected destination"
+    web_client.chat_postMessage(
+        channel=channel,
+        text=text
+    )
 
 def parse_message(message):
     mtch = re.match('^\s+schedule to (.+) at (.+)$', message)
 
     if mtch is not None:
         if mtch.group(1) in STATION_CODES.values():
-            print("Scheduled")
-            #CALL METHOD
+            print("no")
         else:
             try:
                 #CALL METHOD
@@ -46,11 +51,11 @@ def parse_message(message):
 
     if mtch is not None:
         if mtch.group(1) in STATION_CODES.values():
-            print("not scheduled")
-            #CALL METHOD
+            return train_api.board_for_shortcode(mtch.group(1))
         else:
             try:
-                print(STATION_CODES[mtch.group(1)])
+                return train_api.board_for_shortcode(STATION_CODES[mtch.group(1)])
+                # print(response)
             except KeyError as e:
                 print("ERROR")
 

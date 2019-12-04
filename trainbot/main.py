@@ -3,7 +3,7 @@
 from . import STATION_CODES
 import os
 from slack import RTMClient
-from . import slack_api #NOQA
+from . import slack_api
 
 def run():
     #     print('hello world')
