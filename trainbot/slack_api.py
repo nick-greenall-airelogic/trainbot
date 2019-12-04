@@ -4,6 +4,7 @@ import re
 
 from trainbot import train_api
 from . import STATION_CODES
+from . import sched
 
 SLACK_TOKEN = os.environ['SLACK_API_TOKEN']
 _BOT_ID = None
@@ -16,12 +17,12 @@ def call_bot(**payload):
     if 'text' in data and f"<@{bot_id}>" in data['text']:
         channel_id = data['channel']
 
-        send_message(channel_id, data['blocks'][0]['elements'][0]['elements'][1]['text'])
+        parse_message(channel_id, data['blocks'][0]['elements'][0]['elements'][1]['text'])
 
 
 def send_message(channel, short_code):
     web_client = WebClient(token=SLACK_TOKEN)
-    board = parse_message(short_code)
+    board = train_api.board_for_shortcode(short_code)
     if board:
         text = '\n'.join(
             (f'{row[0]} : {row[1]} : {row[2]} : {row[3]}' for row in board)
@@ -33,17 +34,26 @@ def send_message(channel, short_code):
         text=text
     )
 
-def parse_message(message):
-    mtch = re.match('^\s+schedule to (.+) at (.+)$', message)
+def send_message_text(channel, text):
+    web_client = WebClient(token=SLACK_TOKEN)
+    web_client.chat_postMessage(
+        channel=channel,
+        text=text
+    )
+
+def parse_message(channel_id, message):
+    mtch = re.match('^\s+schedule to (.+) at (\d\d:\d\d)$', message)
 
     if mtch is not None:
         if mtch.group(1) in STATION_CODES.values():
-            print("no")
+            sched.set_user_reminder(channel_id, mtch.group(2), lambda :send_message(channel_id, mtch.group(1)))
+            send_message_text(channel_id, 'reminder set at {}'.format(mtch.group(2)))
+            return
         else:
             try:
-                #CALL METHOD
-                print(STATION_CODES[mtch.group(1)])
-                #CALL METHOD
+                sched.set_user_reminder(channel_id, mtch.group(2), lambda :send_message(channel_id, STATION_CODES[mtch.group(1)]))
+                send_message_text(channel_id, 'reminder set at {}'.format(mtch.group(2)))
+                return
             except KeyError as e:
                 print("ERROR")
 
@@ -51,11 +61,12 @@ def parse_message(message):
 
     if mtch is not None:
         if mtch.group(1) in STATION_CODES.values():
-            return train_api.board_for_shortcode(mtch.group(1))
+            send_message(channel_id, mtch.group(1))
+            return
         else:
             try:
-                return train_api.board_for_shortcode(STATION_CODES[mtch.group(1)])
-                # print(response)
+                send_message(channel_id, STATION_CODES[mtch.group(1)])
+                return
             except KeyError as e:
                 print("ERROR")
 

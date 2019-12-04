@@ -10,10 +10,18 @@ start = lambda : _SCHED.start()
 stop = lambda : _SCHED.shutdown()
 
 
-def set_user_reminder(user, destination, time, days, callback):
+def set_user_reminder(user, time, callback, days='MON-FRI'):
+    """
+
+    :param user:
+    :param time: format HH:MM
+    :param days:
+    :param callback:
+    :return:
+    """
     def job_callback():
         logging.info('reminding {}'.format(user))
-        callback(user, destination)
+        callback()
     active_reminder = _SCHED.get_job(user)
     if active_reminder:
         active_reminder.remove()
