@@ -18,17 +18,16 @@ def call_bot(**payload):
     if 'text' in data and f"<@{bot_id}>" in data['text']:
         channel_id = data['channel']
         user = data['user']
-        # MAKE METHOD CALL RETRIEVE DATA AND PUT IT IN TEXT
-        # for the method call
-        # print(data['blocks'][0]['elements'][0]['elements'][1]['text'])
-        dummy_method(data['blocks'][0]['elements'][0]['elements'][1]['text'])
+
+        response = dummy_method(data['blocks'][0]['elements'][0]['elements'][1]['text'])
+
         web_client.chat_postMessage(
             channel=channel_id,
-            text=f"<!here> train train!! <@{user}>!\n"
+            text=f"<!here> {response} for <@{user}>!\n"
         )
 
 
-def dummy_method(message):
+def parse_message(message):
     mtch = re.match('^\s+schedule to (.+) at (.+)$', message)
 
     if mtch is not None:
