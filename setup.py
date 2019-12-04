@@ -11,6 +11,7 @@ setup(
     install_requires=[
         'nre-darwin-py',
         'slackclient',
+        'apscheduler',
     ],
     entry_points={
         'console_scripts': [

@@ -79,5 +79,12 @@ def parse_message(channel_id, message):
         except KeyError as e:
             send_message_text(channel_id, "Hmmm... Maybe you haven't spelt your station full name correctly")
             return
+    if re.match('.*help.*', message):
+        send_message_text(channel_id, """Usage:
+            trains to <dest>[ from <origin>]
+            schedule to <dest>[ from <origin>] at HH:MM[ on <days>]
+            days = e.g. MON-FRI
+        """)
+        return
     send_message_text(channel_id, "I don't know what you mean")
     #INVALID MESSAGE

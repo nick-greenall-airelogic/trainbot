@@ -1,2 +1,3 @@
 slackclient
 nre-darwin-py
+apscheduler
