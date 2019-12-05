@@ -7,10 +7,6 @@ from . import slack_api
 from . import sched
 
 def run():
-    #     print('hello world')
-    #     print(STATION_CODES.get("Leeds"))
-    #     print('LDS' in STATION_CODES.values())
-
     slack_token = os.environ["SLACK_API_TOKEN"]
     rtm_client = RTMClient(token=slack_token)
     sched.start()
